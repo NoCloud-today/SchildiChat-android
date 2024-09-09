@@ -1600,7 +1600,7 @@ class VectorPreferences @Inject constructor(
 
     fun isJitsiCallNotificationEnabled(): Boolean {
         return vectorFeatures.isJitsiCallNotificationEnabled() &&
-                defaultPrefs.getBoolean(SETTINGS_LABS_JITSI_CALL_NOTIFICATION_KEY, getDefault(R.bool.settings_labs_enable_jitsi_call_notifications_default))
+                defaultPrefs.getBoolean(SETTINGS_LABS_JITSI_CALL_NOTIFICATION_KEY, getDefault(im.vector.app.config.R.bool.settings_labs_enable_jitsi_call_notifications_default))
     }
 
     fun showIpAddressInSessionManagerScreens(): Boolean {

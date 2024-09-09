@@ -180,4 +180,6 @@
     <string name="settings_clear_highlight_on_scroll">Очистить выделение при прокрутке</string>
     <string name="settings_call_ringtone_use_default_stun_title">Разрешить резервный сервер звонков</string>
     <string name="settings_integrations_scalar_warning">⚠️ Эта настройка по умолчанию (если не изменена конфигурацией Вашего домашнего сервера) включает доступ к \"Scalar\", менеджеру интеграций от Element. К сожалению, он является проприетарным, т.е. его исходый код не открытый и не может быть проверен пользователями или разработчиками SchildiChat.</string>
+    <string name="call_notification_open_app_action">Открыть приложение</string>
+    <string name="labs_enable_group_call_notifications_summary">Включить уведомление для групповых звонков</string>
 </resources>

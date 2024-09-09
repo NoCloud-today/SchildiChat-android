@@ -382,12 +382,12 @@ class NotificationUtils @Inject constructor(
             title: String,
             fromBg: Boolean,
     ): Notification {
-        val accentColor = ContextCompat.getColor(context, R.color.notification_accent_color)
+        val accentColor = ContextCompat.getColor(context, im.vector.lib.ui.styles.R.color.notification_accent_color)
         val notificationChannel = if (fromBg) CALL_NOTIFICATION_CHANNEL_ID else SILENT_NOTIFICATION_CHANNEL_ID
         val builder = NotificationCompat.Builder(context, notificationChannel)
                 .setContentTitle(ensureTitleNotEmpty(title))
                 .apply {
-                    setContentText(stringProvider.getString(R.string.incoming_video_call))
+                    setContentText(stringProvider.getString(CommonStrings.incoming_video_call))
                     setSmallIcon(R.drawable.ic_call_answer_video)
                 }
                 .setCategory(NotificationCompat.CATEGORY_CALL)
@@ -418,8 +418,8 @@ class NotificationUtils @Inject constructor(
         builder.addAction(
                 NotificationCompat.Action(
                         IconCompat.createWithResource(context, R.drawable.ic_call_hangup)
-                                .setTint(ThemeUtils.getColor(context, R.attr.colorError)),
-                        getActionText(R.string.call_notification_reject, R.attr.colorError),
+                                .setTint(ThemeUtils.getColor(context, android.R.attr.colorError)),
+                        getActionText(CommonStrings.call_notification_reject, android.R.attr.colorError),
                         rejectCallPendingIntent
                 )
         )
@@ -427,7 +427,7 @@ class NotificationUtils @Inject constructor(
         builder.addAction(
                 NotificationCompat.Action(
                         R.drawable.ic_call_answer,
-                        getActionText(R.string.call_notification_open_app, R.attr.colorPrimary),
+                        getActionText(CommonStrings.call_notification_open_app, android.R.attr.colorPrimary),
                         answerCallPendingIntent
                 )
         )
