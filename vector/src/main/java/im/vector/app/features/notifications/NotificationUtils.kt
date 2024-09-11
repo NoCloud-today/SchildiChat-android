@@ -427,7 +427,7 @@ class NotificationUtils @Inject constructor(
         builder.addAction(
                 NotificationCompat.Action(
                         R.drawable.ic_call_answer,
-                        getActionText(CommonStrings.call_notification_open_app, android.R.attr.colorPrimary),
+                        getActionText(CommonStrings.call_notification_open_app_action, android.R.attr.colorPrimary),
                         answerCallPendingIntent
                 )
         )
