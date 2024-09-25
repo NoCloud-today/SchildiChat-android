@@ -239,8 +239,7 @@ class MainActivity : VectorBaseActivity<ActivityMainBinding>(), UnlockedActivity
                 navigator.openRoom(this, roomId, trigger = ViewRoom.Trigger.Shortcut)
             }
             finish()
-        }
-        else {
+        } else {
             args = parseArgs()
             if (args.clearCredentials || args.isUserLoggedOut || args.clearCache) {
                 clearNotifications()
