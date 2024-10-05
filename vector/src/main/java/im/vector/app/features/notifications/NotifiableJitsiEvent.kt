@@ -37,6 +37,7 @@ data class NotifiableJitsiEvent(
         // This is used for >N notification, as the result of a smart reply
         val outGoingMessage: Boolean = false,
         val outGoingMessageFailed: Boolean = false,
+        var isReceived: Boolean? = null,
         override val isRedacted: Boolean = false,
         override val isUpdated: Boolean = false
 ) : NotifiableEvent {
@@ -44,4 +45,12 @@ data class NotifiableJitsiEvent(
     val type: String = EventType.MESSAGE
     val description: String = body ?: ""
     val title: String = senderName ?: ""
+
+    fun updateReceivedStatus() = this.copy(
+            isReceived = when (isReceived) {
+                null -> false
+                false -> true
+                true -> true
+            }
+    )
 }

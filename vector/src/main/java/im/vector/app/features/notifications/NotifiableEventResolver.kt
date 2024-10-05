@@ -174,7 +174,8 @@ class NotifiableEventResolver @Inject constructor(
                                     ContentUrlResolver.ThumbnailMethod.SCALE
                             ),
                     matrixID = session.myUserId,
-                    soundName = null
+                    soundName = null,
+                    isReceived = null,
             )
         } else {
             null

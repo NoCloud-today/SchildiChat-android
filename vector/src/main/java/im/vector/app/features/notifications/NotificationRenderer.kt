@@ -76,7 +76,7 @@ class NotificationRenderer @Inject constructor(
                 jitsiNotifications.forEach { wrapper ->
                     when (wrapper) {
                         is JitsiNotification.IncomingCall -> {
-                            Timber.d("Updating jitsi call notification ${wrapper.roomId} for room ${wrapper.roomName}")
+                            Timber.d("Updating jitsi call notification ${wrapper.eventId} for room ${wrapper.roomName}")
                             if (wrapper.eventId.isNotEmpty() || wrapper.roomId.isNotEmpty()) {
                                 val tag = wrapper.eventId.ifEmpty { wrapper.roomId }
                                 notificationDisplayer.showNotificationMessage(tag, JITSI_CALL_NOTIFICATION_ID, wrapper.notification)
@@ -135,10 +135,7 @@ private fun List<ProcessedEvent<NotifiableEvent>>.groupByType(): GroupedNotifica
             }
             is NotifiableJitsiEvent -> {
                 val jitsiEvents = roomIdToJitsiEventMap.getOrPut(event.roomId) { ArrayList() }
-                val diffInMillis = System.currentTimeMillis() - (it.event as NotifiableJitsiEvent).timestamp
-                if (diffInMillis < 10000) {
-                    jitsiEvents.add(it.castedToEventType())
-                }
+                jitsiEvents.add(it.castedToEventType())
             }
             is SimpleNotifiableEvent -> simpleEvents.add(it.castedToEventType())
         }

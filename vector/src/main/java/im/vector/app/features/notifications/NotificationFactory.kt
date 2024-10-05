@@ -30,14 +30,20 @@ class NotificationFactory @Inject constructor(
 
     fun Map<String, ProcessedJitsiEvents>.toNotifications(): List<JitsiNotification> {
         return map { (roomId, events) ->
+            if (events.all { it.event.isReceived == true }) {
+                return emptyList()
+            }
+
+            val eventToShow = events.first { it.event.isReceived == false }
+
             JitsiNotification.IncomingCall(
                     roomId = roomId,
-                    eventId = events.firstOrNull()?.event?.eventId.orEmpty(),
-                    roomName = events.firstOrNull()?.event?.roomName.orEmpty(),
+                    eventId = eventToShow.event.eventId,
+                    roomName = eventToShow.event.roomName.orEmpty(),
                     notification = notificationUtils.buildIncomingJitsiCallNotification(
-                            callId = events.firstOrNull()?.event?.eventId.orEmpty().ifEmpty { roomId },
+                            callId = eventToShow.event.eventId.ifEmpty { roomId },
                             signalingRoomId = roomId,
-                            title = events.firstOrNull()?.event?.roomName.orEmpty(),
+                            title = eventToShow.event.roomName.orEmpty(),
                             fromBg = true,
                     )
             )
