@@ -500,7 +500,8 @@ fun Event.getPollContent(): MessagePollContent? {
     return getClearContent().toModel<MessagePollContent>()
 }
 
-fun Event.isJitsiEvent() = content?.toModel<JitsiEventContent>()?.type == IS_JITSI_CALL && content.toModel<JitsiEventContent>()?.name == IS_JITSI_CALL
+fun Event.isJitsiEvent() = content?.toModel<JitsiEventContent>()?.type?.lowercase() == IS_JITSI_CALL &&
+        content.toModel<JitsiEventContent>()?.name?.lowercase() == IS_JITSI_CALL
 
 fun Event.supportsNotification() =
         this.getClearType() in EventType.MESSAGE + EventType.POLL_START.values + EventType.POLL_END.values + EventType.STATE_ROOM_BEACON_INFO.values
