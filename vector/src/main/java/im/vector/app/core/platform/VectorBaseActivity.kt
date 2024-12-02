@@ -126,7 +126,7 @@ abstract class VectorBaseActivity<VB : ViewBinding> : AppCompatActivity(), Maver
         val tag = this@VectorBaseActivity::class.simpleName.toString()
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.RESUMED) {
-                logTag?.let { Timber.tag(it).i("observeViewEvents resumed - ${System.identityHashCode(this)}") }
+                logTag?.let { Timber.tag(it).i("observeViewEvents resumed - ${System.identityHashCode(this@VectorBaseActivity)}") }
                 viewEvents
                         .stream(tag)
                         .collect {

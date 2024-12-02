@@ -92,7 +92,10 @@ class VectorActivityLifecycleCallbacks constructor(private val popupAlertManager
 
             if (isTaskCorrupted) {
                 Timber.e("Application is potentially corrupted by an unknown activity")
-                MainActivity.restartApp(activity, MainActivityArgs())
+                // NOTE: this also kills us when we request notification permissions!
+                // Logs say: E SC_NP_DBG: Found potential malicious activity: com.android.permissioncontroller.permission.ui.GrantPermissionsActivity vs im.vector.app.features.debug.TestLinkifyActivity, ...
+                // We *could* whitelist com.android.permissioncontroller and com.google.android.permissioncontroller via activity.packageName, but how can we know that other OS'es don't have their own?
+                //MainActivity.restartApp(activity, MainActivityArgs())
                 return@launch
             }
         }
@@ -144,5 +147,9 @@ class VectorActivityLifecycleCallbacks constructor(private val popupAlertManager
      * @param activity the activity of the task
      * @return true if the activity is potentially malicious
      */
-    private fun isPotentialMaliciousActivity(activity: ComponentName): Boolean = activitiesInfo.none { it.name == activity.className }
+    private fun isPotentialMaliciousActivity(activity: ComponentName): Boolean = activitiesInfo.none { it.name == activity.className }.also {
+        if (it) {
+            Timber.tag("SC_NP_DBG").e("Found potential malicious activity: ${activity.className} (${activity.packageName}) vs ${activitiesInfo.joinToString { it.name }}")
+        }
+    }
 }
