@@ -504,7 +504,11 @@ fun Event.isJitsiEvent() = content?.toModel<JitsiEventContent>()?.type?.lowercas
         content.toModel<JitsiEventContent>()?.name?.lowercase() == IS_JITSI_CALL
 
 fun Event.supportsNotification() =
-        this.getClearType() in EventType.MESSAGE + EventType.POLL_START.values + EventType.POLL_END.values + EventType.STATE_ROOM_BEACON_INFO.values
+        this.getClearType() in EventType.MESSAGE +
+                EventType.POLL_START.values +
+                EventType.POLL_END.values +
+                EventType.STATE_ROOM_BEACON_INFO.values +
+                EventType.ELEMENT_CALL_NOTIFY.values
 
 fun Event.isContentReportable() =
         this.getClearType() in EventType.MESSAGE + EventType.STATE_ROOM_BEACON_INFO.values

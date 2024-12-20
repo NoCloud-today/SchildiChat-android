@@ -37,9 +37,9 @@ ext.versionMinor = 6
 // Note: even values are reserved for regular release, odd values for hotfix release.
 // When creating a hotfix, you should decrease the value, since the current value
 // is the value for the next regular release.
-ext.versionPatch = 22
+ext.versionPatch = 26
 
-ext.scVersion = 80
+ext.scVersion = 83
 
 static def getGitTimestamp() {
     def cmd = 'git show -s --format=%ct'
@@ -154,8 +154,8 @@ android {
         renderscriptTargetApi 24
         renderscriptSupportModeEnabled true
 
-        versionCode 40101300
-        versionName "1.6.20.sc80"
+        versionCode 40101330
+        versionName "1.6.24.sc83"
 
         // Generate a random app task affinity
         manifestPlaceholders = [appTaskAffinitySuffix: "H_${gitRevision()}"]
@@ -317,14 +317,14 @@ android {
             }
 
             dimension "store"
-            versionName "1.6.20.sc80"
+            versionName "1.6.24.sc83"
             buildConfigField "String", "SHORT_FLAVOR_DESCRIPTION", "\"G\""
             buildConfigField "String", "FLAVOR_DESCRIPTION", "\"GooglePlay\""
         }
 
         fdroid {
             dimension "store"
-            versionName "1.6.20.sc80"
+            versionName "1.6.24.sc83"
             buildConfigField "String", "SHORT_FLAVOR_DESCRIPTION", "\"F\""
             buildConfigField "String", "FLAVOR_DESCRIPTION", "\"FDroid\""
             isDefault = true
