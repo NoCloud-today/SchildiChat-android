@@ -30,7 +30,7 @@ class CallHeadsUpActionReceiver : BroadcastReceiver() {
         when (intent?.getIntExtra(EXTRA_CALL_ACTION_KEY, 0)) {
             CALL_ACTION_REJECT -> {
                 val callId = intent.getStringExtra(EXTRA_CALL_ID) ?: return
-                notificationUtils.cancelNotificationMessage(callId, NotificationDrawerManager.JITSI_CALL_NOTIFICATION_ID)
+                notificationUtils.commonUtils.rejectNotification(callId, NotificationDrawerManager.JITSI_CALL_NOTIFICATION_ID)
                 onCallRejectClicked(webRtcCallManager, callId)
             }
         }

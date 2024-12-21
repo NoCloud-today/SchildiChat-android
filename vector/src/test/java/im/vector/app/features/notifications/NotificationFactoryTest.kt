@@ -76,7 +76,7 @@ class NotificationFactoryTest {
         val expectedNotification = notificationUtils.givenBuildSimpleInvitationNotificationFor(A_SIMPLE_EVENT, MY_USER_ID)
         val roomInvitation = listOf(ProcessedEvent(Type.KEEP, A_SIMPLE_EVENT))
 
-        val result = roomInvitation.toNotifications(MY_USER_ID)
+        val result = roomInvitation.toNotifications()
 
         result shouldBeEqualTo listOf(
                 OneShotNotification.Append(
@@ -95,7 +95,7 @@ class NotificationFactoryTest {
     fun `given a missing simple event when mapping to notification then is Removed`() = testWith(notificationFactory) {
         val missingEventRoomInvitation = listOf(ProcessedEvent(Type.REMOVE, A_SIMPLE_EVENT))
 
-        val result = missingEventRoomInvitation.toNotifications(MY_USER_ID)
+        val result = missingEventRoomInvitation.toNotifications()
 
         result shouldBeEqualTo listOf(
                 OneShotNotification.Removed(

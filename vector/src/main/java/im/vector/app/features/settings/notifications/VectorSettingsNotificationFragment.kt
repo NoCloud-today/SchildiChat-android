@@ -45,7 +45,7 @@ import im.vector.app.core.utils.startNotificationSettingsIntent
 import im.vector.app.features.VectorFeatures
 import im.vector.app.features.analytics.plan.MobileScreen
 import im.vector.app.features.home.NotificationPermissionManager
-import im.vector.app.features.notifications.NotificationUtils
+import im.vector.app.features.notifications.utils.NotificationUtils
 import im.vector.app.features.settings.BackgroundSyncMode
 import im.vector.app.features.settings.BackgroundSyncModeChooserDialog
 import im.vector.app.features.settings.VectorPreferences

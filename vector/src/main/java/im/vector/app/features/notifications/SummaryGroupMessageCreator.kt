@@ -10,6 +10,7 @@ package im.vector.app.features.notifications
 import android.app.Notification
 import androidx.core.app.NotificationCompat
 import im.vector.app.core.resources.StringProvider
+import im.vector.app.features.notifications.utils.NotificationUtils
 import im.vector.lib.strings.CommonPlurals
 import im.vector.lib.strings.CommonStrings
 import javax.inject.Inject
@@ -62,7 +63,7 @@ class SummaryGroupMessageCreator @Inject constructor(
                 // TODO get latest event?
                 .setSummaryText(stringProvider.getQuantityString(CommonPlurals.notification_unread_notified_messages, nbEvents, nbEvents))
         return if (useCompleteNotificationFormat) {
-            notificationUtils.buildSummaryListNotification(
+            notificationUtils.builderUtils.buildSummaryListNotification(
                     summaryInboxStyle,
                     sumTitle,
                     noisy = summaryIsNoisy,
@@ -138,7 +139,7 @@ class SummaryGroupMessageCreator @Inject constructor(
                 messageStr
             }
         }
-        return notificationUtils.buildSummaryListNotification(
+        return notificationUtils.builderUtils.buildSummaryListNotification(
                 style = null,
                 compatSummary = privacyTitle,
                 noisy = summaryIsNoisy,

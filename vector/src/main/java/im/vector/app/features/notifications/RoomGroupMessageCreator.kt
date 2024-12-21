@@ -11,6 +11,7 @@ import android.graphics.Bitmap
 import androidx.core.app.NotificationCompat
 import androidx.core.app.Person
 import im.vector.app.core.resources.StringProvider
+import im.vector.app.features.notifications.utils.NotificationUtils
 import im.vector.lib.strings.CommonPlurals
 import im.vector.lib.strings.CommonStrings
 import me.gujun.android.span.Span
@@ -59,7 +60,7 @@ class RoomGroupMessageCreator @Inject constructor(
                 shouldBing = events.any { it.noisy }
         )
         return RoomNotification.Message(
-                notificationUtils.buildMessagesListNotification(
+                notificationUtils.builderUtils.buildMessagesListNotification(
                         style,
                         RoomEventGroupInfo(roomId, roomName, isDirect = !roomIsGroup).also {
                             it.hasSmartReplyError = smartReplyErrors.isNotEmpty()
@@ -70,7 +71,6 @@ class RoomGroupMessageCreator @Inject constructor(
                         threadId = lastKnownRoomEvent.threadId,
                         largeIcon = largeBitmap,
                         lastMessageTimestamp,
-                        userDisplayName,
                         tickerText
                 ),
                 meta

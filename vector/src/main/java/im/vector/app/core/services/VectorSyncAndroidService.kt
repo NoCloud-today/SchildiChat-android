@@ -24,7 +24,7 @@ import androidx.work.WorkerParameters
 import dagger.hilt.android.AndroidEntryPoint
 import im.vector.app.core.extensions.startForegroundCompat
 import im.vector.app.core.platform.PendingIntentCompat
-import im.vector.app.features.notifications.NotificationUtils
+import im.vector.app.features.notifications.utils.NotificationUtils
 import im.vector.app.features.settings.BackgroundSyncMode
 import im.vector.lib.core.utils.timer.Clock
 import im.vector.lib.core.utils.timer.DefaultClock
@@ -89,7 +89,7 @@ class VectorSyncAndroidService : SyncAndroidService() {
         } else {
             CommonStrings.notification_listening_for_notifications
         }
-        val notification = notificationUtils.buildForegroundServiceNotification(notificationSubtitleRes, false)
+        val notification = notificationUtils.builderUtils.buildForegroundServiceNotification(notificationSubtitleRes, false)
         startForegroundCompat(NotificationUtils.NOTIFICATION_ID_FOREGROUND_SERVICE, notification)
     }
 

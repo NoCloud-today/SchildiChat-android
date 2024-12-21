@@ -55,7 +55,7 @@ import im.vector.app.features.configuration.VectorConfiguration
 import im.vector.app.features.invite.InvitesAcceptor
 import im.vector.app.features.lifecycle.VectorActivityLifecycleCallbacks
 import im.vector.app.features.notifications.NotificationDrawerManager
-import im.vector.app.features.notifications.NotificationUtils
+import im.vector.app.features.notifications.utils.NotificationUtils
 import im.vector.app.features.pin.PinLocker
 import im.vector.app.features.popup.PopupAlertManager
 import im.vector.app.features.rageshake.VectorFileLogger
@@ -176,7 +176,7 @@ class VectorApplication :
 
         emojiCompatWrapper.init(fontRequest)
 
-        notificationUtils.createNotificationChannels()
+        notificationUtils.commonUtils.createNotificationChannels()
 
         ProcessLifecycleOwner.get().lifecycle.addObserver(object : DefaultLifecycleObserver {
             private var stopBackgroundSync = false

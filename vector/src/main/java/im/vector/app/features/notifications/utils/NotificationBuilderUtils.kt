@@ -5,43 +5,31 @@
  * Please see LICENSE in the repository root for full details.
  */
 
-@file:Suppress("UNUSED_PARAMETER")
+package im.vector.app.features.notifications.utils
 
-package im.vector.app.features.notifications
-
-import android.annotation.SuppressLint
 import android.app.Notification
-import android.app.NotificationChannel
-import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
-import android.graphics.Canvas
 import android.net.Uri
 import android.os.Build
 import android.text.Spannable
 import android.text.SpannableString
 import android.text.style.ForegroundColorSpan
 import androidx.annotation.AttrRes
-import androidx.annotation.ChecksSdkIntAtLeast
-import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
 import androidx.core.app.NotificationCompat
-import androidx.core.app.NotificationManagerCompat
 import androidx.core.app.RemoteInput
 import androidx.core.app.TaskStackBuilder
 import androidx.core.content.ContextCompat
-import androidx.core.content.res.ResourcesCompat
 import androidx.core.graphics.drawable.IconCompat
-import androidx.fragment.app.Fragment
 import im.vector.app.R
 import im.vector.app.core.extensions.createIgnoredUri
 import im.vector.app.core.platform.PendingIntentCompat
 import im.vector.app.core.resources.BuildMeta
 import im.vector.app.core.resources.StringProvider
 import im.vector.app.core.services.CallAndroidService
-import im.vector.app.core.utils.startNotificationChannelSettingsIntent
 import im.vector.app.features.MainActivity
 import im.vector.app.features.call.VectorCallActivity
 import im.vector.app.features.call.service.CallHeadsUpActionReceiver
@@ -52,8 +40,16 @@ import im.vector.app.features.home.room.detail.RoomDetailActivity
 import im.vector.app.features.home.room.detail.arguments.TimelineArgs
 import im.vector.app.features.home.room.threads.ThreadsActivity
 import im.vector.app.features.home.room.threads.arguments.ThreadTimelineArgs
+import im.vector.app.features.notifications.InviteNotifiableEvent
+import im.vector.app.features.notifications.NotificationActionIds
+import im.vector.app.features.notifications.NotificationBroadcastReceiver
+import im.vector.app.features.notifications.RoomEventGroupInfo
+import im.vector.app.features.notifications.SimpleNotifiableEvent
+import im.vector.app.features.notifications.utils.NotificationUtils.Companion.CALL_NOTIFICATION_CHANNEL_ID
+import im.vector.app.features.notifications.utils.NotificationUtils.Companion.LISTENING_FOR_EVENTS_NOTIFICATION_CHANNEL_ID
+import im.vector.app.features.notifications.utils.NotificationUtils.Companion.NOISY_NOTIFICATION_CHANNEL_ID
+import im.vector.app.features.notifications.utils.NotificationUtils.Companion.SILENT_NOTIFICATION_CHANNEL_ID
 import im.vector.app.features.settings.VectorPreferences
-import im.vector.app.features.settings.troubleshoot.TestNotificationReceiver
 import im.vector.app.features.themes.ThemeUtils
 import im.vector.lib.core.utils.timer.Clock
 import im.vector.lib.strings.CommonPlurals
@@ -64,213 +60,27 @@ import javax.inject.Singleton
 import kotlin.random.Random
 
 @Singleton
-class NotificationUtils @Inject constructor(
+class NotificationBuilderUtils @Inject constructor(
         private val context: Context,
         private val stringProvider: StringProvider,
         private val vectorPreferences: VectorPreferences,
         private val clock: Clock,
         private val actionIds: NotificationActionIds,
         private val buildMeta: BuildMeta,
+        private val notificationCommonUtils: NotificationCommonUtils
 ) {
 
-    companion object {
-        /* ==========================================================================================
-         * IDs for notifications
-         * ========================================================================================== */
-
-        /**
-         * Identifier of the foreground notification used to keep the application alive
-         * when it runs in background.
-         * This notification, which is not removable by the end user, displays what
-         * the application is doing while in background.
-         */
-        const val NOTIFICATION_ID_FOREGROUND_SERVICE = 61
-
-        /* ==========================================================================================
-         * IDs for channels
-         * ========================================================================================== */
-
-        // on devices >= android O, we need to define a channel for each notifications
-        private const val LISTENING_FOR_EVENTS_NOTIFICATION_CHANNEL_ID = "LISTEN_FOR_EVENTS_NOTIFICATION_CHANNEL_ID"
-
-        private const val NOISY_NOTIFICATION_CHANNEL_ID = "DEFAULT_NOISY_NOTIFICATION_CHANNEL_ID"
-
-        const val SILENT_NOTIFICATION_CHANNEL_ID = "DEFAULT_SILENT_NOTIFICATION_CHANNEL_ID_V2"
-        private const val CALL_NOTIFICATION_CHANNEL_ID = "CALL_NOTIFICATION_CHANNEL_ID_V2"
-
-        @ChecksSdkIntAtLeast(api = Build.VERSION_CODES.O)
-        fun supportNotificationChannels() = (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
-
-        fun openSystemSettingsForSilentCategory(fragment: Fragment) {
-            startNotificationChannelSettingsIntent(fragment, SILENT_NOTIFICATION_CHANNEL_ID)
-        }
-
-        fun openSystemSettingsForNoisyCategory(fragment: Fragment) {
-            startNotificationChannelSettingsIntent(fragment, NOISY_NOTIFICATION_CHANNEL_ID)
-        }
-
-        fun openSystemSettingsForCallCategory(fragment: Fragment) {
-            startNotificationChannelSettingsIntent(fragment, CALL_NOTIFICATION_CHANNEL_ID)
-        }
-    }
-
-    private val notificationManager = NotificationManagerCompat.from(context)
-
-    /* ==========================================================================================
-     * Channel names
-     * ========================================================================================== */
-
     /**
-     * Create notification channels.
+     * Creates a notification that indicates the application is initializing.
      */
-    fun createNotificationChannels() {
-        if (!supportNotificationChannels()) {
-            return
-        }
-
-        val accentColor = ContextCompat.getColor(context, im.vector.lib.ui.styles.R.color.notification_accent_color)
-
-        // Migration - the noisy channel was deleted and recreated when sound preference was changed (id was DEFAULT_NOISY_NOTIFICATION_CHANNEL_ID_BASE
-        // + currentTimeMillis).
-        // Now the sound can only be change directly in system settings, so for app upgrading we are deleting this former channel
-        // Starting from this version the channel will not be dynamic
-        for (channel in notificationManager.notificationChannels) {
-            val channelId = channel.id
-            val legacyBaseName = "DEFAULT_NOISY_NOTIFICATION_CHANNEL_ID_BASE"
-            if (channelId.startsWith(legacyBaseName)) {
-                notificationManager.deleteNotificationChannel(channelId)
-            }
-        }
-        // Migration - Remove deprecated channels
-        for (channelId in listOf("DEFAULT_SILENT_NOTIFICATION_CHANNEL_ID", "CALL_NOTIFICATION_CHANNEL_ID")) {
-            notificationManager.getNotificationChannel(channelId)?.let {
-                notificationManager.deleteNotificationChannel(channelId)
-            }
-        }
-
-        /**
-         * Default notification importance: shows everywhere, makes noise, but does not visually
-         * intrude.
-         */
-        notificationManager.createNotificationChannel(NotificationChannel(
-                NOISY_NOTIFICATION_CHANNEL_ID,
-                stringProvider.getString(CommonStrings.notification_noisy_notifications).ifEmpty { "Noisy notifications" },
-                NotificationManager.IMPORTANCE_DEFAULT
-        )
-                .apply {
-                    description = stringProvider.getString(CommonStrings.notification_noisy_notifications)
-                    enableVibration(true)
-                    enableLights(true)
-                    lightColor = accentColor
-                })
-
-        /**
-         * Low notification importance: shows everywhere, but is not intrusive.
-         */
-        notificationManager.createNotificationChannel(NotificationChannel(
-                SILENT_NOTIFICATION_CHANNEL_ID,
-                stringProvider.getString(CommonStrings.notification_silent_notifications).ifEmpty { "Silent notifications" },
-                NotificationManager.IMPORTANCE_LOW
-        )
-                .apply {
-                    description = stringProvider.getString(CommonStrings.notification_silent_notifications)
-                    setSound(null, null)
-                    enableLights(true)
-                    lightColor = accentColor
-                })
-
-        notificationManager.createNotificationChannel(NotificationChannel(
-                LISTENING_FOR_EVENTS_NOTIFICATION_CHANNEL_ID,
-                stringProvider.getString(CommonStrings.notification_listening_for_events).ifEmpty { "Listening for events" },
-                NotificationManager.IMPORTANCE_MIN
-        )
-                .apply {
-                    description = stringProvider.getString(CommonStrings.notification_listening_for_events)
-                    setSound(null, null)
-                    setShowBadge(false)
-                })
-
-        notificationManager.createNotificationChannel(NotificationChannel(
-                CALL_NOTIFICATION_CHANNEL_ID,
-                stringProvider.getString(CommonStrings.call).ifEmpty { "Call" },
-                NotificationManager.IMPORTANCE_HIGH
-        )
-                .apply {
-                    description = stringProvider.getString(CommonStrings.call)
-                    setSound(null, null)
-                    enableLights(true)
-                    lightColor = accentColor
-                })
-    }
-
-    fun getChannel(channelId: String): NotificationChannel? {
-        return notificationManager.getNotificationChannel(channelId)
-    }
-
-    /**
-     * Build a polling thread listener notification.
-     *
-     * @param subTitleResId subtitle string resource Id of the notification
-     * @param withProgress true to show indeterminate progress on the notification
-     * @return the polling thread listener notification
-     */
-    fun buildForegroundServiceNotification(@StringRes subTitleResId: Int, withProgress: Boolean = true): Notification {
-        // build the pending intent go to the home screen if this is clicked.
-        val i = HomeActivity.newIntent(context, firstStartMainActivity = false)
-        i.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
-        val mainIntent = MainActivity.getIntentWithNextIntent(context, i)
-        val pi = PendingIntent.getActivity(context, 0, mainIntent, PendingIntentCompat.FLAG_IMMUTABLE)
-
-        val accentColor = ContextCompat.getColor(context, im.vector.lib.ui.styles.R.color.notification_accent_color)
-
-        val builder = NotificationCompat.Builder(context, LISTENING_FOR_EVENTS_NOTIFICATION_CHANNEL_ID)
-                .setContentTitle(stringProvider.getString(subTitleResId))
+    fun buildStartAppNotification(): Notification {
+        return NotificationCompat.Builder(context, LISTENING_FOR_EVENTS_NOTIFICATION_CHANNEL_ID)
+                .setContentTitle(stringProvider.getString(CommonStrings.updating_your_data))
                 .setSmallIcon(R.drawable.sync)
+                .setColor(ThemeUtils.getColor(context, android.R.attr.colorPrimary))
                 .setCategory(NotificationCompat.CATEGORY_SERVICE)
-                .setColor(accentColor)
-                .setContentIntent(pi)
-                .apply {
-                    if (withProgress) {
-                        setProgress(0, 0, true)
-                    }
-                }
-
-        // PRIORITY_MIN should not be used with Service#startForeground(int, Notification)
-        builder.priority = NotificationCompat.PRIORITY_LOW
-//        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
-//            builder.priority = NotificationCompat.PRIORITY_MIN
-//        }
-
-        val notification = builder.build()
-
-        notification.flags = notification.flags or Notification.FLAG_NO_CLEAR
-
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
-            // some devices crash if this field is not set
-            // even if it is deprecated
-
-            // setLatestEventInfo() is deprecated on Android M, so we try to use
-            // reflection at runtime, to avoid compiler error: "Cannot resolve method.."
-            try {
-                val deprecatedMethod = notification.javaClass
-                        .getMethod(
-                                "setLatestEventInfo",
-                                Context::class.java,
-                                CharSequence::class.java,
-                                CharSequence::class.java,
-                                PendingIntent::class.java
-                        )
-                deprecatedMethod.invoke(notification, context, buildMeta.applicationName, stringProvider.getString(subTitleResId), pi)
-            } catch (ex: Exception) {
-                Timber.e(ex, "## buildNotification(): Exception - setLatestEventInfo() Msg=")
-            }
-        }
-        return notification
-    }
-
-    fun getChannelForIncomingCall(fromBg: Boolean): NotificationChannel? {
-        val notificationChannel = if (fromBg) CALL_NOTIFICATION_CHANNEL_ID else SILENT_NOTIFICATION_CHANNEL_ID
-        return getChannel(notificationChannel)
+                .setPriority(NotificationCompat.PRIORITY_LOW)
+                .build()
     }
 
     /**
@@ -386,7 +196,7 @@ class NotificationUtils @Inject constructor(
                 .setLights(accentColor, 500, 500)
                 .setOngoing(true)
 
-        val contentIntent = MainActivity.jitsiCallIntent(
+        val contentIntent = MainActivity.getCallIntent(
                 context = context,
                 roomId = signalingRoomId,
                 callId = callId,
@@ -481,6 +291,67 @@ class NotificationUtils @Inject constructor(
     }
 
     /**
+     * Build a polling thread listener notification.
+     *
+     * @param subTitleResId subtitle string resource Id of the notification
+     * @param withProgress true to show indeterminate progress on the notification
+     * @return the polling thread listener notification
+     */
+    fun buildForegroundServiceNotification(@StringRes subTitleResId: Int, withProgress: Boolean = true): Notification {
+        // build the pending intent go to the home screen if this is clicked.
+        val i = HomeActivity.newIntent(context, firstStartMainActivity = false)
+        i.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
+        val mainIntent = MainActivity.getIntentWithNextIntent(context, i)
+        val pi = PendingIntent.getActivity(context, 0, mainIntent, PendingIntentCompat.FLAG_IMMUTABLE)
+
+        val accentColor = ContextCompat.getColor(context, im.vector.lib.ui.styles.R.color.notification_accent_color)
+
+        val builder = NotificationCompat.Builder(context, LISTENING_FOR_EVENTS_NOTIFICATION_CHANNEL_ID)
+                .setContentTitle(stringProvider.getString(subTitleResId))
+                .setSmallIcon(R.drawable.sync)
+                .setCategory(NotificationCompat.CATEGORY_SERVICE)
+                .setColor(accentColor)
+                .setContentIntent(pi)
+                .apply {
+                    if (withProgress) {
+                        setProgress(0, 0, true)
+                    }
+                }
+
+        // PRIORITY_MIN should not be used with Service#startForeground(int, Notification)
+        builder.priority = NotificationCompat.PRIORITY_LOW
+//        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
+//            builder.priority = NotificationCompat.PRIORITY_MIN
+//        }
+
+        val notification = builder.build()
+
+        notification.flags = notification.flags or Notification.FLAG_NO_CLEAR
+
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
+            // some devices crash if this field is not set
+            // even if it is deprecated
+
+            // setLatestEventInfo() is deprecated on Android M, so we try to use
+            // reflection at runtime, to avoid compiler error: "Cannot resolve method.."
+            try {
+                val deprecatedMethod = notification.javaClass
+                        .getMethod(
+                                "setLatestEventInfo",
+                                Context::class.java,
+                                CharSequence::class.java,
+                                CharSequence::class.java,
+                                PendingIntent::class.java
+                        )
+                deprecatedMethod.invoke(notification, context, buildMeta.applicationName, stringProvider.getString(subTitleResId), pi)
+            } catch (ex: Exception) {
+                Timber.e(ex, "## buildNotification(): Exception - setLatestEventInfo() Msg=")
+            }
+        }
+        return notification
+    }
+
+    /**
      * Build a pending call notification.
      *
      * @param call information about the call
@@ -526,7 +397,7 @@ class NotificationUtils @Inject constructor(
         return builder.build()
     }
 
-    private fun buildRejectCallPendingIntent(callId: String): PendingIntent {
+    fun buildRejectCallPendingIntent(callId: String): PendingIntent {
         val rejectCallActionReceiver = Intent(context, CallHeadsUpActionReceiver::class.java).apply {
             putExtra(CallHeadsUpActionReceiver.EXTRA_CALL_ID, callId)
             putExtra(CallHeadsUpActionReceiver.EXTRA_CALL_ACTION_KEY, CallHeadsUpActionReceiver.CALL_ACTION_REJECT)
@@ -601,32 +472,6 @@ class NotificationUtils @Inject constructor(
                 .build()
     }
 
-    /**
-     * Creates a notification indicating that the microphone is currently being accessed by the application.
-     */
-    fun buildMicrophoneAccessNotification(): Notification {
-        return NotificationCompat.Builder(context, SILENT_NOTIFICATION_CHANNEL_ID)
-                .setContentTitle(stringProvider.getString(CommonStrings.microphone_in_use_title))
-                .setSmallIcon(R.drawable.ic_call_answer)
-                .setPriority(NotificationCompat.PRIORITY_LOW)
-                .setColor(ThemeUtils.getColor(context, android.R.attr.colorPrimary))
-                .setCategory(NotificationCompat.CATEGORY_CALL)
-                .build()
-    }
-
-    /**
-     * Creates a notification that indicates the application is initializing.
-     */
-    fun buildStartAppNotification(): Notification {
-        return NotificationCompat.Builder(context, LISTENING_FOR_EVENTS_NOTIFICATION_CHANNEL_ID)
-                .setContentTitle(stringProvider.getString(CommonStrings.updating_your_data))
-                .setSmallIcon(R.drawable.sync)
-                .setColor(ThemeUtils.getColor(context, android.R.attr.colorPrimary))
-                .setCategory(NotificationCompat.CATEGORY_SERVICE)
-                .setPriority(NotificationCompat.PRIORITY_LOW)
-                .build()
-    }
-
     fun buildDownloadFileNotification(uri: Uri, fileName: String, mimeType: String): Notification {
         return NotificationCompat.Builder(context, SILENT_NOTIFICATION_CHANNEL_ID)
                 .setGroup(buildMeta.applicationName)
@@ -659,7 +504,6 @@ class NotificationUtils @Inject constructor(
             threadId: String?,
             largeIcon: Bitmap?,
             lastMessageTimestamp: Long,
-            senderDisplayNameForReplyCompat: String?,
             tickerText: String
     ): Notification {
         val accentColor = ContextCompat.getColor(context, im.vector.lib.ui.styles.R.color.notification_accent_color)
@@ -741,7 +585,7 @@ class NotificationUtils @Inject constructor(
 
                     // Quick reply
                     if (!roomInfo.hasSmartReplyError) {
-                        buildQuickReplyIntent(roomInfo.roomId, threadId, senderDisplayNameForReplyCompat)?.let { replyPendingIntent ->
+                        buildQuickReplyIntent(roomInfo.roomId, threadId)?.let { replyPendingIntent ->
                             val remoteInput = RemoteInput.Builder(NotificationBroadcastReceiver.KEY_TEXT_REPLY)
                                     .setLabel(stringProvider.getString(CommonStrings.action_quick_reply))
                                     .build()
@@ -862,7 +706,6 @@ class NotificationUtils @Inject constructor(
 
     fun buildSimpleEventNotification(
             simpleNotifiableEvent: SimpleNotifiableEvent,
-            matrixId: String
     ): Notification {
         val accentColor = ContextCompat.getColor(context, im.vector.lib.ui.styles.R.color.notification_accent_color)
         // Build the pending intent for when the notification is clicked
@@ -976,7 +819,7 @@ class NotificationUtils @Inject constructor(
         However, for Android devices running Marshmallow and below (API level 23 and below),
         it will be more appropriate to use an activity. Since you have to provide your own UI.
      */
-    private fun buildQuickReplyIntent(roomId: String, threadId: String?, senderName: String?): PendingIntent? {
+    private fun buildQuickReplyIntent(roomId: String, threadId: String?): PendingIntent? {
         val intent: Intent
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
             intent = Intent(context, NotificationBroadcastReceiver::class.java)
@@ -1058,6 +901,19 @@ class NotificationUtils @Inject constructor(
                 .build()
     }
 
+    /**
+     * Creates a notification indicating that the microphone is currently being accessed by the application.
+     */
+    fun buildMicrophoneAccessNotification(): Notification {
+        return NotificationCompat.Builder(context, SILENT_NOTIFICATION_CHANNEL_ID)
+                .setContentTitle(stringProvider.getString(CommonStrings.microphone_in_use_title))
+                .setSmallIcon(R.drawable.ic_call_answer)
+                .setPriority(NotificationCompat.PRIORITY_LOW)
+                .setColor(ThemeUtils.getColor(context, android.R.attr.colorPrimary))
+                .setCategory(NotificationCompat.CATEGORY_CALL)
+                .build()
+    }
+
     private fun getDismissSummaryPendingIntent(): PendingIntent {
         val intent = Intent(context, NotificationBroadcastReceiver::class.java)
         intent.action = actionIds.dismissSummary
@@ -1070,84 +926,12 @@ class NotificationUtils @Inject constructor(
         )
     }
 
-    fun showNotificationMessage(tag: String?, id: Int, notification: Notification) {
-        notificationManager.notify(tag, id, notification)
-    }
-
-    fun cancelNotificationMessage(tag: String?, id: Int) {
-        notificationManager.cancel(tag, id)
-    }
-
-    /**
-     * Cancel the foreground notification service.
-     */
-    fun cancelNotificationForegroundService() {
-        notificationManager.cancel(NOTIFICATION_ID_FOREGROUND_SERVICE)
-    }
-
-    /**
-     * Cancel all the notification.
-     */
-    fun cancelAllNotifications() {
-        // Keep this try catch (reported by GA)
-        try {
-            notificationManager.cancelAll()
-        } catch (e: Exception) {
-            Timber.e(e, "## cancelAllNotifications() failed")
-        }
-    }
-
-    @SuppressLint("LaunchActivityFromNotification")
-    fun displayDiagnosticNotification() {
-        val testActionIntent = Intent(context, TestNotificationReceiver::class.java)
-        testActionIntent.action = actionIds.diagnostic
-        val testPendingIntent = PendingIntent.getBroadcast(
-                context,
-                0,
-                testActionIntent,
-                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntentCompat.FLAG_IMMUTABLE
-        )
-
-        notificationManager.notify(
-                "DIAGNOSTIC",
-                888,
-                NotificationCompat.Builder(context, NOISY_NOTIFICATION_CHANNEL_ID)
-                        .setContentTitle(buildMeta.applicationName)
-                        .setContentText(stringProvider.getString(CommonStrings.settings_troubleshoot_test_push_notification_content))
-                        .setSmallIcon(R.drawable.ic_status_bar_sc)
-                        .setLargeIcon(getBitmap(context, R.drawable.element_logo_sc))
-                        .setColor(ContextCompat.getColor(context, im.vector.lib.ui.styles.R.color.notification_accent_color))
-                        .setPriority(NotificationCompat.PRIORITY_MAX)
-                        .setCategory(NotificationCompat.CATEGORY_STATUS)
-                        .setAutoCancel(true)
-                        .setContentIntent(testPendingIntent)
-                        .build()
-        )
-    }
-
-    private fun getBitmap(context: Context, @DrawableRes drawableRes: Int): Bitmap? {
-        val drawable = ResourcesCompat.getDrawable(context.resources, drawableRes, null) ?: return null
-        val canvas = Canvas()
-        val bitmap = Bitmap.createBitmap(drawable.intrinsicWidth, drawable.intrinsicHeight, Bitmap.Config.ARGB_8888)
-        canvas.setBitmap(bitmap)
-        drawable.setBounds(0, 0, drawable.intrinsicWidth, drawable.intrinsicHeight)
-        drawable.draw(canvas)
-        return bitmap
-    }
-
-    /**
-     * Return true it the user has enabled the do not disturb mode.
-     */
-    fun isDoNotDisturbModeOn(): Boolean {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
-            return false
+    private fun ensureTitleNotEmpty(title: String?): CharSequence {
+        if (title.isNullOrBlank()) {
+            return buildMeta.applicationName
         }
 
-        // We cannot use NotificationManagerCompat here.
-        val setting = context.getSystemService(NotificationManager::class.java)!!.currentInterruptionFilter
-
-        return setting == NotificationManager.INTERRUPTION_FILTER_NONE ||
-                setting == NotificationManager.INTERRUPTION_FILTER_ALARMS
+        return title
     }
 
     private fun getActionText(@StringRes stringRes: Int, @AttrRes colorRes: Int): Spannable {
@@ -1155,13 +939,5 @@ class NotificationUtils @Inject constructor(
             val foregroundColorSpan = ForegroundColorSpan(ThemeUtils.getColor(context, colorRes))
             setSpan(foregroundColorSpan, 0, length, 0)
         }
-    }
-
-    private fun ensureTitleNotEmpty(title: String?): CharSequence {
-        if (title.isNullOrBlank()) {
-            return buildMeta.applicationName
-        }
-
-        return title
     }
 }

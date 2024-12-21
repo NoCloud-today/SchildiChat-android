@@ -9,7 +9,7 @@ package im.vector.app.fdroid.service
 import android.content.Intent
 import dagger.hilt.android.AndroidEntryPoint
 import im.vector.app.core.services.VectorAndroidService
-import im.vector.app.features.notifications.NotificationUtils
+import im.vector.app.features.notifications.utils.NotificationUtils
 import im.vector.lib.strings.CommonStrings
 import javax.inject.Inject
 
@@ -26,7 +26,7 @@ class GuardAndroidService : VectorAndroidService() {
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         val notificationSubtitleRes = CommonStrings.notification_listening_for_notifications
-        val notification = notificationUtils.buildForegroundServiceNotification(notificationSubtitleRes, false)
+        val notification = notificationUtils.builderUtils.buildForegroundServiceNotification(notificationSubtitleRes, false)
         startForeground(NotificationUtils.NOTIFICATION_ID_FOREGROUND_SERVICE, notification)
         return START_STICKY
     }

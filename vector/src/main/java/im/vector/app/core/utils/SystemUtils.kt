@@ -23,7 +23,7 @@ import androidx.annotation.RequiresApi
 import androidx.annotation.StringRes
 import androidx.core.content.getSystemService
 import androidx.fragment.app.Fragment
-import im.vector.app.features.notifications.NotificationUtils
+import im.vector.app.features.notifications.utils.NotificationUtils
 import im.vector.lib.strings.CommonStrings
 import org.matrix.android.sdk.api.util.getApplicationInfoCompat
 

@@ -35,7 +35,7 @@ class NotificationRenderer @Inject constructor(
             val roomNotifications = roomEvents.toNotifications(myUserDisplayName, myUserAvatarUrl)
             val jitsiNotifications = jitsiEvents.toNotifications()
             val invitationNotifications = invitationEvents.toNotifications(myUserId)
-            val simpleNotifications = simpleEvents.toNotifications(myUserId)
+            val simpleNotifications = simpleEvents.toNotifications()
             val summaryNotification = createSummaryNotification(
                     roomNotifications = roomNotifications,
                     invitationNotifications = invitationNotifications,
