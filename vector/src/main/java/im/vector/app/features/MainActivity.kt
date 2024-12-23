@@ -33,7 +33,7 @@ import im.vector.app.features.home.room.detail.RoomDetailActivity
 import im.vector.app.features.home.room.threads.ThreadsActivity
 import im.vector.app.features.location.live.map.LiveLocationMapViewActivity
 import im.vector.app.features.notifications.NotificationDrawerManager
-import im.vector.app.features.notifications.utils.NotificationUtils
+import im.vector.app.features.notifications.NotificationUtils
 import im.vector.app.features.pin.UnlockedActivity
 import im.vector.app.features.pin.lockscreen.crypto.LockScreenKeyRepository
 import im.vector.app.features.pin.lockscreen.pincode.PinCodeHelper
@@ -222,7 +222,7 @@ class MainActivity : VectorBaseActivity<ActivityMainBinding>(), UnlockedActivity
         } else if (intent.action == ACTION_ROOM_DETAILS_JITSI_CALL) {
             val callId = intent.getStringExtra(EXTRA_CALL_ID).orEmpty()
 
-            notificationUtils.commonUtils.cancelNotificationMessage(callId, NotificationDrawerManager.JITSI_CALL_NOTIFICATION_ID)
+            notificationUtils.cancelNotificationMessage(callId, NotificationDrawerManager.JITSI_CALL_NOTIFICATION_ID)
 
             startSyncing()
             val roomId = intent.getStringExtra(EXTRA_ROOM_ID)

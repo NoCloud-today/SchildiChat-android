@@ -8,7 +8,6 @@
 package im.vector.app.features.notifications
 
 import android.app.Notification
-import im.vector.app.features.notifications.utils.NotificationUtils
 import javax.inject.Inject
 
 private typealias ProcessedMessageEvents = List<ProcessedEvent<NotifiableMessageEvent>>
@@ -17,7 +16,8 @@ private typealias ProcessedJitsiEvents = List<ProcessedEvent<NotifiableJitsiEven
 class NotificationFactory @Inject constructor(
         private val notificationUtils: NotificationUtils,
         private val roomGroupMessageCreator: RoomGroupMessageCreator,
-        private val summaryGroupMessageCreator: SummaryGroupMessageCreator
+        private val summaryGroupMessageCreator: SummaryGroupMessageCreator,
+        private val jitsiNotificationsUtils: JitsiNotificationsUtils
 ) {
 
     fun Map<String, ProcessedJitsiEvents>.toNotifications(): List<JitsiNotification> {
@@ -32,7 +32,7 @@ class NotificationFactory @Inject constructor(
                     roomId = roomId,
                     eventId = eventToShow.event.eventId,
                     roomName = eventToShow.event.roomName.orEmpty(),
-                    notification = notificationUtils.builderUtils.buildIncomingJitsiCallNotification(
+                    notification = jitsiNotificationsUtils.buildIncomingJitsiCallNotification(
                             callId = eventToShow.event.eventId.ifEmpty { roomId },
                             signalingRoomId = roomId,
                             title = eventToShow.event.roomName.orEmpty(),
@@ -66,7 +66,7 @@ class NotificationFactory @Inject constructor(
             when (processed) {
                 ProcessedEvent.Type.REMOVE -> OneShotNotification.Removed(key = event.roomId)
                 ProcessedEvent.Type.KEEP -> OneShotNotification.Append(
-                        notificationUtils.builderUtils.buildRoomInvitationNotification(event, myUserId),
+                        notificationUtils.buildRoomInvitationNotification(event, myUserId),
                         OneShotNotification.Append.Meta(
                                 key = event.roomId,
                                 summaryLine = event.description,
@@ -79,12 +79,12 @@ class NotificationFactory @Inject constructor(
     }
 
     @JvmName("toNotificationsSimpleNotifiableEvent")
-    fun List<ProcessedEvent<SimpleNotifiableEvent>>.toNotifications(): List<OneShotNotification> {
+    fun List<ProcessedEvent<SimpleNotifiableEvent>>.toNotifications(myUserId: String): List<OneShotNotification> {
         return map { (processed, event) ->
             when (processed) {
                 ProcessedEvent.Type.REMOVE -> OneShotNotification.Removed(key = event.eventId)
                 ProcessedEvent.Type.KEEP -> OneShotNotification.Append(
-                        notificationUtils.builderUtils.buildSimpleEventNotification(event),
+                        notificationUtils.buildSimpleEventNotification(event, myUserId),
                         OneShotNotification.Append.Meta(
                                 key = event.eventId,
                                 summaryLine = event.description,

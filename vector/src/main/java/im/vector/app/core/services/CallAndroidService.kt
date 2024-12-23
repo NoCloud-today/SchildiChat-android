@@ -29,7 +29,7 @@ import im.vector.app.features.call.webrtc.WebRtcCallManager
 import im.vector.app.features.call.webrtc.getOpponentAsMatrixItem
 import im.vector.app.features.displayname.getBestName
 import im.vector.app.features.home.AvatarRenderer
-import im.vector.app.features.notifications.utils.NotificationUtils
+import im.vector.app.features.notifications.NotificationUtils
 import im.vector.app.features.popup.IncomingCallAlert
 import im.vector.app.features.popup.PopupAlertManager
 import im.vector.lib.core.utils.compat.getParcelableExtraCompat
@@ -168,7 +168,7 @@ class CallAndroidService : VectorAndroidService() {
             contentAction = Runnable { showCallScreen(call, VectorCallActivity.INCOMING_RINGING) }
         }
         alertManager.postVectorAlert(incomingCallAlert)
-        val notification = notificationUtils.builderUtils.buildIncomingCallNotification(
+        val notification = notificationUtils.buildIncomingCallNotification(
                 call = call,
                 title = callInformation.opponentMatrixItem?.getBestName() ?: callInformation.opponentUserId,
                 fromBg = fromBg
@@ -192,7 +192,7 @@ class CallAndroidService : VectorAndroidService() {
             handleUnexpectedState(callId)
             return
         }
-        val notification = notificationUtils.builderUtils.buildCallEndedNotification(false)
+        val notification = notificationUtils.buildCallEndedNotification(false)
         val notificationId = callId.hashCode()
         startForegroundCompat(notificationId, notification)
         if (knownCalls.isEmpty()) {
@@ -206,7 +206,7 @@ class CallAndroidService : VectorAndroidService() {
         }
         val wasConnected = connectedCallIds.remove(callId)
         if (!wasConnected && !terminatedCall.isOutgoing && !rejected && endCallReason != EndCallReason.ANSWERED_ELSEWHERE) {
-            val missedCallNotification = notificationUtils.builderUtils.buildCallMissedNotification(terminatedCall)
+            val missedCallNotification = notificationUtils.buildCallMissedNotification(terminatedCall)
             notificationManager.notify(MISSED_CALL_TAG, terminatedCall.nativeRoomId.hashCode(), missedCallNotification)
         }
     }
@@ -227,7 +227,7 @@ class CallAndroidService : VectorAndroidService() {
         }
         val callInformation = call.toCallInformation()
         Timber.tag(loggerTag.value).v("displayOutgoingCallNotification : display the dedicated notification")
-        val notification = notificationUtils.builderUtils.buildOutgoingRingingCallNotification(
+        val notification = notificationUtils.buildOutgoingRingingCallNotification(
                 call = call,
                 title = callInformation.opponentMatrixItem?.getBestName() ?: callInformation.opponentUserId
         )
@@ -251,7 +251,7 @@ class CallAndroidService : VectorAndroidService() {
         }
         alertManager.cancelAlert(callId)
         val callInformation = call.toCallInformation()
-        val notification = notificationUtils.builderUtils.buildPendingCallNotification(
+        val notification = notificationUtils.buildPendingCallNotification(
                 call = call,
                 title = callInformation.opponentMatrixItem?.getBestName() ?: callInformation.opponentUserId
         )
@@ -267,7 +267,7 @@ class CallAndroidService : VectorAndroidService() {
         Timber.tag(loggerTag.value).v("Fallback to clear everything")
         callRingPlayerIncoming?.stop()
         callRingPlayerOutgoing?.stop()
-        val notification = notificationUtils.builderUtils.buildCallEndedNotification(false)
+        val notification = notificationUtils.buildCallEndedNotification(false)
         if (callId != null) {
             startForegroundCompat(callId.hashCode(), notification)
         } else {

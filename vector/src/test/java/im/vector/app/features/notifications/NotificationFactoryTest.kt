@@ -8,6 +8,7 @@
 package im.vector.app.features.notifications
 
 import im.vector.app.features.notifications.ProcessedEvent.Type
+import im.vector.app.test.fakes.FakeJitsiNotificationUtils
 import im.vector.app.test.fakes.FakeNotificationUtils
 import im.vector.app.test.fakes.FakeRoomGroupMessageCreator
 import im.vector.app.test.fakes.FakeSummaryGroupMessageCreator
@@ -31,11 +32,13 @@ class NotificationFactoryTest {
     private val notificationUtils = FakeNotificationUtils()
     private val roomGroupMessageCreator = FakeRoomGroupMessageCreator()
     private val summaryGroupMessageCreator = FakeSummaryGroupMessageCreator()
+    private val jitsiNotificationUtils = FakeJitsiNotificationUtils()
 
     private val notificationFactory = NotificationFactory(
             notificationUtils.instance,
             roomGroupMessageCreator.instance,
-            summaryGroupMessageCreator.instance
+            summaryGroupMessageCreator.instance,
+            jitsiNotificationUtils.instance,
     )
 
     @Test
@@ -76,7 +79,7 @@ class NotificationFactoryTest {
         val expectedNotification = notificationUtils.givenBuildSimpleInvitationNotificationFor(A_SIMPLE_EVENT, MY_USER_ID)
         val roomInvitation = listOf(ProcessedEvent(Type.KEEP, A_SIMPLE_EVENT))
 
-        val result = roomInvitation.toNotifications()
+        val result = roomInvitation.toNotifications(MY_USER_ID)
 
         result shouldBeEqualTo listOf(
                 OneShotNotification.Append(
@@ -95,7 +98,7 @@ class NotificationFactoryTest {
     fun `given a missing simple event when mapping to notification then is Removed`() = testWith(notificationFactory) {
         val missingEventRoomInvitation = listOf(ProcessedEvent(Type.REMOVE, A_SIMPLE_EVENT))
 
-        val result = missingEventRoomInvitation.toNotifications()
+        val result = missingEventRoomInvitation.toNotifications(MY_USER_ID)
 
         result shouldBeEqualTo listOf(
                 OneShotNotification.Removed(
