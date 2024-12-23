@@ -16,9 +16,8 @@ import im.vector.app.features.analytics.AnalyticsTracker
 import im.vector.app.features.call.webrtc.WebRtcCallManager
 import im.vector.app.features.home.AvatarRenderer
 import im.vector.app.features.navigation.Navigator
-import im.vector.app.features.notifications.utils.NotificationBuilderUtils
-import im.vector.app.features.notifications.utils.NotificationCommonUtils
-import im.vector.app.features.notifications.utils.NotificationUtils
+import im.vector.app.features.notifications.JitsiNotificationsUtils
+import im.vector.app.features.notifications.NotificationUtils
 import im.vector.app.features.pin.PinLocker
 import im.vector.app.features.rageshake.BugReporter
 import im.vector.app.features.session.SessionListener
@@ -35,11 +34,9 @@ interface SingletonEntryPoint {
 
     fun avatarRenderer(): AvatarRenderer
 
-    fun notificationCommonUtils(): NotificationCommonUtils
-
-    fun notificationBuilderUtils(): NotificationBuilderUtils
-
     fun notificationUtils(): NotificationUtils
+
+    fun jitsiNotificationsUtils(): JitsiNotificationsUtils
 
     fun activeSessionHolder(): ActiveSessionHolder
 

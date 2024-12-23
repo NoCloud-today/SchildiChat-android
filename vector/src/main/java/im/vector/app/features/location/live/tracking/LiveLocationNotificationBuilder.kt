@@ -22,7 +22,7 @@ import im.vector.app.features.home.room.detail.arguments.TimelineArgs
 import im.vector.app.features.location.live.map.LiveLocationMapViewActivity
 import im.vector.app.features.location.live.map.LiveLocationMapViewArgs
 import im.vector.app.features.notifications.NotificationActionIds
-import im.vector.app.features.notifications.utils.NotificationUtils
+import im.vector.app.features.notifications.NotificationUtils
 import im.vector.app.features.themes.ThemeUtils
 import im.vector.lib.core.utils.timer.Clock
 import im.vector.lib.strings.CommonStrings

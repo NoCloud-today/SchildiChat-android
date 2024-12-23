@@ -32,7 +32,7 @@ import androidx.core.app.ShareCompat
 import androidx.core.content.FileProvider
 import androidx.core.content.getSystemService
 import im.vector.app.R
-import im.vector.app.features.notifications.utils.NotificationUtils
+import im.vector.app.features.notifications.NotificationUtils
 import im.vector.app.features.themes.ThemeUtils
 import im.vector.lib.strings.CommonStrings
 import kotlinx.coroutines.Dispatchers
@@ -289,12 +289,12 @@ suspend fun saveMedia(
                         }
                     }
                 }
-                notificationUtils.builderUtils.buildDownloadFileNotification(
+                notificationUtils.buildDownloadFileNotification(
                         uri,
                         filename,
                         mediaMimeType ?: MimeTypes.OctetStream
                 ).let { notification ->
-                    notificationUtils.commonUtils.showNotificationMessage("DL", uri.hashCode(), notification)
+                    notificationUtils.showNotificationMessage("DL", uri.hashCode(), notification)
                 }
             }
         } else {

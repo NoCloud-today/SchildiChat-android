@@ -9,7 +9,7 @@ package im.vector.app.features.settings.troubleshoot
 import android.content.Context
 import im.vector.app.core.resources.StringProvider
 import im.vector.app.core.utils.startNotificationSettingsIntent
-import im.vector.app.features.notifications.utils.NotificationUtils
+import im.vector.app.features.notifications.NotificationUtils
 import im.vector.lib.strings.CommonStrings
 import javax.inject.Inject
 
@@ -25,7 +25,7 @@ class TestNotification @Inject constructor(
 
     override fun perform(testParameters: TestParameters) {
         // Display the notification right now
-        notificationUtils.commonUtils.displayDiagnosticNotification()
+        notificationUtils.displayDiagnosticNotification()
         description = stringProvider.getString(CommonStrings.settings_troubleshoot_test_notification_notice)
 
         quickFix = object : TroubleshootQuickFix(CommonStrings.open_settings) {

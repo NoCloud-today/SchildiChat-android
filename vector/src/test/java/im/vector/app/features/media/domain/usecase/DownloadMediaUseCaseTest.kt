@@ -12,7 +12,7 @@ import android.net.Uri
 import androidx.core.net.toUri
 import im.vector.app.core.intent.getMimeTypeFromUri
 import im.vector.app.core.utils.saveMedia
-import im.vector.app.features.notifications.utils.NotificationUtils
+import im.vector.app.features.notifications.NotificationUtils
 import im.vector.app.test.fakes.FakeClock
 import im.vector.app.test.fakes.FakeFile
 import im.vector.app.test.fakes.FakeSession
