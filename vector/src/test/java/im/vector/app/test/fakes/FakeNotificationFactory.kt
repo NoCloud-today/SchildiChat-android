@@ -33,7 +33,7 @@ class FakeNotificationFactory {
         with(instance) {
             every { groupedEvents.roomEvents.toNotifications(myUserDisplayName, myUserAvatarUrl) } returns roomNotifications
             every { groupedEvents.invitationEvents.toNotifications(myUserId) } returns invitationNotifications
-            every { groupedEvents.simpleEvents.toNotifications() } returns simpleNotifications
+            every { groupedEvents.simpleEvents.toNotifications(myUserId) } returns simpleNotifications
 
             every {
                 createSummaryNotification(
