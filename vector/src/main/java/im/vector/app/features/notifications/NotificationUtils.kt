@@ -18,8 +18,12 @@ import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.Canvas
+import android.media.AudioAttributes
+import android.media.RingtoneManager
 import android.net.Uri
 import android.os.Build
+import android.os.PowerManager
+import android.provider.Settings
 import android.text.Spannable
 import android.text.SpannableString
 import android.text.style.ForegroundColorSpan
@@ -197,9 +201,14 @@ class NotificationUtils @Inject constructor(
         )
                 .apply {
                     description = stringProvider.getString(CommonStrings.call)
-                    setSound(null, null)
+                    enableVibration(true)
                     enableLights(true)
                     lightColor = accentColor
+                    val audioAttributes = AudioAttributes.Builder()
+                            .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                            .setUsage(AudioAttributes.USAGE_NOTIFICATION)
+                            .build()
+                    setSound(Settings.System.DEFAULT_RINGTONE_URI, audioAttributes)
                 })
     }
 
@@ -351,7 +360,7 @@ class NotificationUtils @Inject constructor(
         )
         if (fromBg) {
             // Compat: Display the incoming call notification on the lock screen
-            builder.priority = NotificationCompat.PRIORITY_HIGH
+            builder.priority = NotificationCompat.PRIORITY_MAX
             builder.setFullScreenIntent(contentPendingIntent, true)
         }
         return builder.build()
