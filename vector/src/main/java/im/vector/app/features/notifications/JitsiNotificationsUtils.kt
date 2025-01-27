@@ -20,6 +20,7 @@ import android.app.Notification
 import android.app.PendingIntent
 import android.app.TaskStackBuilder
 import android.content.Context
+import android.media.RingtoneManager
 import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
 import androidx.core.graphics.drawable.IconCompat
@@ -71,6 +72,8 @@ class JitsiNotificationsUtils @Inject constructor(
                 .setColor(ThemeUtils.getColor(context, android.R.attr.colorPrimary))
                 .setLights(accentColor, 500, 500)
                 .setOngoing(true)
+                .setDefaults(NotificationCompat.DEFAULT_SOUND)
+                .setSound(RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION))
 
         val contentIntent = MainActivity.getCallIntent(
                 context = context,
